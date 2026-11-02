@@ -4,8 +4,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.bot.api import TelegramAPIServer
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-from bot.config import bot_token, accounts, reseller_accounts, api_id, api_hash
-from bot.utils.r2 import R2Storage
+from bot.config import (bot_token, accounts, reseller_accounts, api_id, api_hash,
+                        s3_endpoint, s3_region, s3_access_key, s3_secret_key,
+                        s3_bucket_ipa, s3_bucket_plist, s3_public_url_ipa, s3_public_url_plist)
+from bot.utils.storage import S3Storage
 from pyrogram import Client 
 
 server = TelegramAPIServer.from_base("http://localhost:81")
@@ -17,16 +19,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 conn = sqlite3.connect("database.db")
 cursor = conn.cursor()
 
-r2 = R2Storage('https://Example.r2.cloudflarestorage.com',
-               'KeyExample',
-               'LongKeyExaemplef74b9f9b30bbaa7ad72eb053c9f7616',
-               'BucketName', 'https://yourDomainforR2.com')
+storage = S3Storage(s3_endpoint, s3_access_key, s3_secret_key,
+                    s3_bucket_ipa, s3_public_url_ipa, s3_region)
 
-
-r2_plist = R2Storage('https://Example.r2.cloudflarestorage.com',
-                     'KeyExample',
-                     'LongKeyExaemplef74b9f9b30bbaa7ad72eb053c9f7616',
-                     'Bucketname', 'https://yourDomainforR2.com')
+plist_storage = S3Storage(s3_endpoint, s3_access_key, s3_secret_key,
+                          s3_bucket_plist, s3_public_url_plist, s3_region)
 
 
 from bot.utils.account_manager import AccountManager, ChineseApi

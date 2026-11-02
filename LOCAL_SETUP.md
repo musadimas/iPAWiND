@@ -61,10 +61,8 @@ python --version   # must print 3.11.x
 ## 4. Python dependencies
 
 ```bash
-pip install -r requirements.txt pyjwt cryptography pytz
+pip install -r requirements.txt
 ```
-
-`requirements.txt` lists `jwt`, but the code needs **PyJWT** (plus `cryptography` for ES256). `pytz` is imported but not listed.
 
 ## 5. Certificate checker (Node)
 
@@ -85,20 +83,35 @@ chmod +x tools/zsign
 
 If it complains about missing shared libraries, install them with `sudo apt install` (usually `libssl3` / `libminizip1`).
 
-## 7. Docker (local Telegram Bot API server)
+## 7. `.env`
+
+```bash
+cp .env.example .env
+```
+
+Set `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` (from https://my.telegram.org). The `S3_*` defaults already point at the local RustFS container — change `S3_ACCESS_KEY` / `S3_SECRET_KEY` if you like; they are also RustFS's root credentials.
+
+## 8. Docker (Telegram Bot API server + RustFS)
 
 1. Install Docker Desktop on Windows.
 2. Docker Desktop → **Settings → Resources → WSL integration** → enable your Ubuntu distro → **Apply & restart**.
 3. Open a new WSL terminal and check: `docker version`.
 
-Set your own `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` (from https://my.telegram.org) in `docker-compose.yml`, then:
-
 ```bash
 docker compose up -d
-curl -s http://localhost:81   # any HTTP response means nginx is up
+curl -s http://localhost:81              # any HTTP response means nginx is up
+curl -s http://localhost:9000/health     # RustFS S3 API
 ```
 
-## 8. Web folder
+| Service | Port | Purpose |
+|---|---|---|
+| `nginx` → `api` | 81 | Local Telegram Bot API (large file up/downloads) |
+| `rustfs` | 9000 | S3 API — signed `.ipa`, `.plist` manifests, plist logos |
+| `rustfs` | 9001 | Web console, http://localhost:9001 (log in with `S3_ACCESS_KEY` / `S3_SECRET_KEY`) |
+
+The bot creates the `ipa` and `plist` buckets on startup and makes them publicly readable (iOS downloads without credentials).
+
+## 9. Web folder
 
 The bot creates per-user folders under `web_path` (`/var/www/html` by default):
 
@@ -107,7 +120,7 @@ sudo mkdir -p /var/www/html/uploads
 sudo chown -R $USER /var/www/html/uploads
 ```
 
-## 9. Configuration
+## 10. Configuration
 
 ### `bot/config.py`
 
@@ -119,12 +132,10 @@ sudo chown -R $USER /var/www/html/uploads
 | `api_key`, `api_urls` | Shortener API key and redirect domains |
 | `admin`, `reseller` | Telegram user IDs |
 | `PASSWORD` | Password for exported `.p12` files |
-| `web_path` | Keep `/var/www/html` unless you changed step 8 |
+| `web_path` | Keep `/var/www/html` unless you changed step 9 |
 | `accounts` | `[{"name": "<name>", "id": "<id>"}]` — see below |
 
-### `bot/loader.py`
-
-Fill in the two storage clients `r2` (signed `.ipa` files) and `r2_plist` (manifests and logos): endpoint, access key, secret key, bucket, public URL.
+Storage settings live in `.env` (step 7), not in `config.py`.
 
 ### Apple developer accounts
 
@@ -141,7 +152,7 @@ api/
 
 `api/` is git-ignored — never commit it.
 
-## 10. Run
+## 11. Run
 
 ```bash
 conda activate ipawind
@@ -152,7 +163,8 @@ Logs go to the terminal and `bot.log`. Pyrogram creates `pyrobot.session` on fir
 
 ## Notes
 
-- **Installing on a device needs public HTTPS.** iOS only installs `itms-services://` links when the `.plist` and `.ipa` URLs are public HTTPS with a valid certificate. Signing works locally; installing from `localhost` does not.
+- **Installing on a device needs public HTTPS.** iOS only installs `itms-services://` links when the `.plist` and `.ipa` URLs are public HTTPS with a valid certificate. Signing works locally; installing from `localhost` does not. Put a reverse proxy (nginx/Caddy) or a tunnel (e.g. Cloudflare Tunnel) with TLS in front of port 9000, then set `S3_PUBLIC_URL_IPA=https://files.example.com/ipa` and `S3_PUBLIC_URL_PLIST=https://files.example.com/plist`. `S3_ENDPOINT` can stay `http://localhost:9000`.
+- **Other S3 backends:** the storage client is plain S3 with path-style URLs, so MinIO, Cloudflare R2 or AWS S3 work by changing only the `S3_*` values.
 - **Database:** `database.db` ships with the table schema. Back it up before experimenting — it holds users, redeem codes, and sessions.
 
 ## Troubleshooting
@@ -167,3 +179,6 @@ Logs go to the terminal and `bot.log`. Pyrogram creates `pyrobot.session` on fir
 | `Please run 'resources.js'` | Run `node tools/checker/resources.js` from the repo root |
 | `./tools/zsign: Permission denied` | `chmod +x tools/zsign`; if you are on `/mnt/c`, move the repo into `~` |
 | Bot can't connect to `localhost:81` | `docker compose ps`; both `api` and `nginx` must be running |
+| `Could not connect to the endpoint URL: "http://localhost:9000/..."` on startup | RustFS isn't up: `docker compose ps` / `docker compose logs rustfs` |
+| `InvalidAccessKeyId` / `SignatureDoesNotMatch` | `S3_ACCESS_KEY` / `S3_SECRET_KEY` differ from what RustFS started with. Fix `.env`, then `docker compose up -d rustfs` |
+| RustFS logs `permission denied` on `/data` | The container runs as UID 10001: `docker compose down && docker volume rm ipawind_rustfs-data && docker compose up -d` |

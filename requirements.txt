@@ -4,4 +4,7 @@ apscheduler
 aioboto3
 aiofiles
 TgCrypto
-jwt
+PyJWT
+cryptography
+pytz
+python-dotenv

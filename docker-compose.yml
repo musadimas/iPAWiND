@@ -6,8 +6,8 @@ services:
     image: aiogram/telegram-bot-api:latest
     restart: always
     environment:
-      TELEGRAM_API_ID: 3725072
-      TELEGRAM_API_HASH: 030a284a8d54f448060212ad99a81687
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
       TELEGRAM_LOCAL: 1
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
@@ -23,5 +23,22 @@ services:
     ports:
       - "81:81"
 
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: always
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+    volumes:
+      - rustfs-data:/data
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web console
+
 volumes:
   telegram-bot-api-data:
+  rustfs-data:

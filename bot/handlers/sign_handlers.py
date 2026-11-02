@@ -301,16 +301,16 @@ async def get_ipa_and_sign(message: types.Message, state: FSMContext):
         except:
             pass
         plist_random = str(uuid.uuid4())
-        r2_url = await r2.upload_file(file,
+        ipa_url = await storage.upload_file(file,
                                       f"{message.from_user.id}/{random_id}.ipa")
         
         details = cursor.execute(f"SELECT * from redirects where user_id={message.from_user.id}").fetchone()
         
 
-        plist_url = await r2_plist.upload_file(
+        plist_url = await plist_storage.upload_file(
             BytesIO(
                 template.format(
-                    url=r2_url,
+                    url=ipa_url,
                     package_name=bundleID, version=app_version,
                     appname=app_name, 
                     redirect_url = details[6] if (details and details[6] != "default") else "https://raw.githubusercontent.com/NekooGroup/api/main/appicon.png"

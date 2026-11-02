@@ -57,12 +57,12 @@ docker compose up -d
 
 
 
-## Step 4: Configure Cloudflare R2 and Bot Settings
+## Step 4: Configure storage and bot settings
 
-- Create an R2 bucket in your Cloudflare account.
+- Storage defaults to the bundled RustFS container (S3 API on :9000, console on :9001). Buckets are created on startup.
 - Then, edit the following configuration files:
 
-- In bot/loader.py, update your Cloudflare R2 bucket settings
+- Copy `.env.example` to `.env` and set the Telegram API ID/hash and `S3_*` storage settings (RustFS runs in docker-compose; R2/MinIO also work)
 - In bot/config.py, add your bot token and required API keys
 
 

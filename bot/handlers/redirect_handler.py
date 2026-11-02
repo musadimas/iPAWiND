@@ -40,7 +40,7 @@ async def get_photo(message: types.Message, state=FSMContext):
     elif message.photo:
         with tempfile.TemporaryDirectory() as temp_folder:
             photo_path = await utils.download_aiogram_bytes(message.photo[-1])
-            url = await r2_plist.upload_file(
+            url = await plist_storage.upload_file(
                 photo_path, 
                 os.path.join("plist_logo", str(uuid.uuid4()))
             )

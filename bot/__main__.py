@@ -6,7 +6,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram import executor
 
 from bot import handlers
-from bot.loader import dp, account_manager, r2, pyrogram_bot
+from bot.loader import dp, account_manager, storage, plist_storage, pyrogram_bot
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,6 +23,8 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 scheduler = AsyncIOScheduler()
 
 async def on_startup(dp):
+    await storage.ensure_bucket()
+    await plist_storage.ensure_bucket()
     await pyrogram_bot.start()
 
     scheduler.add_job(
