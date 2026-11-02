@@ -23,6 +23,8 @@ Telegram Bot: [@ipawind_bot](https://t.me/ipawind_bot)
 
 ## Installation
 
+> Developing on Windows? See [LOCAL_SETUP.md](LOCAL_SETUP.md) for a WSL2 + conda setup.
+
 ### Step 1: Update and Install Essential Packages
 
 ```bash

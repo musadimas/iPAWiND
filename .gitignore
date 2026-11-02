@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Runtime data
+sessions/
+api/
+*.session
+*.session-journal
+bot.log*
+*.db-journal
+
+# Signing material
+*.p12
+*.mobileprovision
+*.p8
+*.cer
+*.pem
+
+# Node / cert checker
+node_modules/
+CA-PEM/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
